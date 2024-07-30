@@ -7,6 +7,7 @@ class GameRound:
 	def __init__(self, word):  # информация о текущем раунде игрока
 		self.game_started = False
 		self.guessed_word = word
+		self.printed_word = word
 		self.input_letters = []
 		self.input_fully_words = []
 		self.was_hint_used = False
@@ -24,6 +25,7 @@ class GameRound:
 
 	def add_scores(self):
 		self.total_points += self.get_points_in_this_game()
+		return self.total_points
 
 	def get_guessed_letters(self):  # метод, вызывается когда угаданна буква
 		# !!!! не переписать
@@ -68,6 +70,10 @@ class Database:  # работа с базой данных
 		self.execute_and_exit(f'UPDATE Users SET record = {player.record} WHERE user_id = {player.chat_id}')
 		self.execute_and_exit(f'UPDATE Users SET current_game = {points} WHERE user_id = {player.chat_id}')
 
+		for x in range(len(self.players_cache)):
+			if self.players_cache[x].chat_id == player.chat_id:
+				del self.players_cache[x]
+
 	def get_user(self, user_id: int):  # создание нового класса(игрока)
 		for p in self.players_cache:
 			if p.chat_id == user_id:
@@ -78,6 +84,8 @@ class Database:  # работа с базой данных
 		player = Player(user_id)
 		player.record = record
 		player.gameRound = GameRound(random.choice(self.words_to_guess))
+		print(player.gameRound.guessed_word)
+		assert type(points) is int
 		player.gameRound.total_points = points
 
 		self.players_cache.append(player)

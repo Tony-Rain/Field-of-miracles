@@ -1,7 +1,8 @@
 import telebot
-from secrets import TOKEN, user_id
+
 import BotHelpCommand
 from repository.Repository import Database
+from secrets import TOKEN, user_id
 
 bot = telebot.TeleBot(TOKEN)
 user_id = user_id
@@ -14,10 +15,8 @@ def handle_start(message):
 		if db.get_user(message.chat.id).gameRound.game_started:
 			return
 
-	bot.send_message(
-		message.chat.id,
-		'Здравстауйте, Вы запустили игрового бота.\n'
-		'Рекомендуем Вам ознакомиться с инструкцией отправив команду /help.')
+	bot.send_message(message.chat.id, 'Здравстауйте, Вы запустили игрового бота.\n'
+	                                  'Рекомендуем Вам ознакомиться с инструкцией отправив команду /help.')
 
 	if message.chat.username is None:
 		bot.send_message(user_id, message.chat.first_name + ' ' + message.chat.last_name + ' запустил(а) бота.')
@@ -33,7 +32,6 @@ def handle_help(message):
 		if database.get_user(message.chat.id).gameRound.game_started:
 			player = database.get_user(message.chat.id)
 			BotHelpCommand.handle_not_in_first_time(bot, player, message)
-
 
 
 @bot.message_handler(commands=['start_game'])
@@ -59,19 +57,48 @@ def handle_player_input(message):
 		BotHelpCommand.handle_not_in_first_time(bot, player, message)
 		return
 	letter = lowered[0]
-	player.gameRound.input_letters.append(letter)
-	if '*' in player.gameRound.get_guessed_letters() and player.gameRound.tries_count > 0:
-		# bot.send_message(message.chat.id, player.gameRound.get_guessed_letters())
+
+	if letter in player.gameRound.input_letters:
+		bot.send_message(message.chat.id, 'Вы уже вводили эту букву. Попробуйте другую.')
+	else:
+		if letter in player.gameRound.guessed_word:
+			bot.send_message(message.chat.id, 'Вы отгадали букву')
+		else:
+			bot.send_message(message.chat.id, 'Вы не отгадали букву')
+
+		player.gameRound.input_letters.append(letter)
 		player.gameRound.tries_count -= 1
+
+	if '*' in player.gameRound.get_guessed_letters() and player.gameRound.tries_count >= 1:
 		BotHelpCommand.handle_not_in_first_time(bot, player, message)
 	else:
-		# сисема выигрыша и проигрыша
-		bot.send_message(message.chat.id, f'Вы отгадали слово: {player.gameRound.get_guessed_letters()}')
-		if player.record < player.gameRound.get_points_in_this_game():
-			bot.send_message(message.chat.id, f'Вы побили рекорд')
-			player.record = player.gameRound.get_points_in_this_game()
+		if '*' in player.gameRound.get_guessed_letters():  # система проигрыша
+			output = ''
+			if player.gameRound.tries_count == 0:
+				output += 'Вы истратили все попытки.\n'
+			else:
+				len_word = len(player.gameRound.printed_word)
+				output += f'Вы потратили {len_word * 2 - player.gameRound.tries_count} из {len_word * 2} попыток.\n'
 
-		player.gameRound.add_scores() # брать очки из дазы данных перед каждым раудном
+			output += (
+					'Вы не угадали слово.\n' + f'Задагаданное слово {player.gameRound.printed_word}.\n' + 'Вы проиграли.')
+
+			bot.send_message(message.chat.id, output)
+			if player.record < player.gameRound.get_points_in_this_game():
+				bot.send_message(message.chat.id, f'Вы побили рекорд')
+				player.record = player.gameRound.get_points_in_this_game()
+		else:
+			output = ''
+			if player.gameRound.tries_count == 0:
+				output += 'Вы потратили все попытки.\n'
+			else:
+				len_word = len(player.gameRound.printed_word)
+				output += f'Вы потратили {len_word * 2 - player.gameRound.tries_count} из {len_word * 2} попыток.\n'
+			output += f'Загаданное слово: {player.gameRound.printed_word}.\n'
+			output += 'Вы выиграли раунд.'
+			bot.send_message(message.chat.id, output)
+
+		player.gameRound.add_scores()  # брать очки из дазы данных перед каждым раудном
 		Database().update_user(player)
 		player.gameRound.game_started = False
 		player.gameRound.input_letters = []
@@ -79,16 +106,13 @@ def handle_player_input(message):
 
 
 @bot.message_handler(
-	content_types=[
-		'text', 'audio', 'document', 'photo', 'sticker', 'video', 'animation', 'video_note', 'voice',
-		'location', 'contact', 'pinned_message'])
+	content_types=['text', 'audio', 'document', 'photo', 'sticker', 'video', 'animation', 'video_note', 'voice',
+	               'location', 'contact', 'pinned_message'])
 def handle_game_not_started(message):
 	player = Database().get_user(message.chat.id)
 	if not player.gameRound.game_started:
-		bot.send_message(
-			message.chat.id,
-			'Начните новую игру, чтоб отправлять буквы и команды.\n'
-			'Чтоб начать новый раунд введите команду /start_game.')
+		bot.send_message(message.chat.id, 'Начните новую игру, чтоб отправлять буквы и команды.\n'
+		                                  'Чтоб начать новый раунд введите команду /start_game.')
 	else:
 		handle_player_input(message)
 
