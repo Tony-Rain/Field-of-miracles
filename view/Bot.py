@@ -62,9 +62,9 @@ def handle_player_input(message):
 		bot.send_message(message.chat.id, 'Вы уже вводили эту букву. Попробуйте другую.')
 	else:
 		if letter in player.gameRound.guessed_word:
-			bot.send_message(message.chat.id, 'Вы отгадали букву')
+			bot.send_message(message.chat.id, 'Вы угадали, эта буква есть в слове.')
 		else:
-			bot.send_message(message.chat.id, 'Вы не отгадали букву')
+			bot.send_message(message.chat.id, 'Вы не угадали, буквы нет в слове.')
 
 		player.gameRound.input_letters.append(letter)
 		player.gameRound.tries_count -= 1
@@ -75,7 +75,7 @@ def handle_player_input(message):
 		if '*' in player.gameRound.get_guessed_letters():  # система проигрыша
 			output = ''
 			if player.gameRound.tries_count == 0:
-				output += 'Вы истратили все попытки.\n'
+				output += 'Вы потратили все попытки.\n'
 			else:
 				len_word = len(player.gameRound.printed_word)
 				output += f'Вы потратили {len_word * 2 - player.gameRound.tries_count} из {len_word * 2} попыток.\n'
@@ -84,9 +84,11 @@ def handle_player_input(message):
 					'Вы не угадали слово.\n' + f'Задагаданное слово {player.gameRound.printed_word}.\n' + 'Вы проиграли.')
 
 			bot.send_message(message.chat.id, output)
-			if player.record < player.gameRound.get_points_in_this_game():
+			bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.')
+			if player.record < player.gameRound.add_scores():
 				bot.send_message(message.chat.id, f'Вы побили рекорд')
-				player.record = player.gameRound.get_points_in_this_game()
+				player.record = player.gameRound.add_scores()
+			player.gameRound.total_points = 0
 		else:
 			output = ''
 			if player.gameRound.tries_count == 0:
@@ -95,10 +97,10 @@ def handle_player_input(message):
 				len_word = len(player.gameRound.printed_word)
 				output += f'Вы потратили {len_word * 2 - player.gameRound.tries_count} из {len_word * 2} попыток.\n'
 			output += f'Загаданное слово: {player.gameRound.printed_word}.\n'
-			output += 'Вы выиграли раунд.'
+			output += 'Вы выиграли раунд.\n'
 			bot.send_message(message.chat.id, output)
-
-		player.gameRound.add_scores()  # брать очки из дазы данных перед каждым раудном
+			player.gameRound.add_scores()  # брать очки из дазы данных перед каждым раудном
+			bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.')
 		Database().update_user(player)
 		player.gameRound.game_started = False
 		player.gameRound.input_letters = []

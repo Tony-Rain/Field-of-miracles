@@ -19,8 +19,8 @@ class GameRound:
 
 	def get_points_in_this_game(self):
 		points = self.tries_count
-		if not self.was_hint_used:
-			points += 5
+		# if not self.was_hint_used: временно!!!!!
+		# 	points += 5
 		return points
 
 	def add_scores(self):
