@@ -1,2 +1,5 @@
-.idea
-secrets.py
+.idea 
+view/secrets.py
+.venv
+view/in.txt
+view/user_id_database.db
