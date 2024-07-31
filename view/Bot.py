@@ -10,9 +10,12 @@ user_id = user_id
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
-	db = Database()
-	if db.does_player_exits(message.chat.id):
-		if db.get_user(message.chat.id).gameRound.game_started:
+	database = Database()
+	if database.does_player_exits(message.chat.id):
+		if database.get_user(message.chat.id).gameRound.game_started:
+			bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
+			player = database.get_user(message.chat.id)
+			BotHelpCommand.handle_not_in_first_time(bot, player, message)
 			return
 
 	bot.send_message(message.chat.id, 'Здравстауйте, Вы запустили игрового бота.\n'
@@ -26,18 +29,29 @@ def handle_start(message):
 
 @bot.message_handler(commands=['help'])
 def handle_help(message):
-	bot.send_message(message.chat.id, BotHelpCommand.get_help_message())
+	# bot.send_message(message.chat.id, BotHelpCommand.get_help_message())
 	database = Database()
 	if database.does_player_exits(message.chat.id):
 		if database.get_user(message.chat.id).gameRound.game_started:
+			bot.send_message(message.chat.id, BotHelpCommand.get_help_message(True))
 			player = database.get_user(message.chat.id)
 			BotHelpCommand.handle_not_in_first_time(bot, player, message)
-
+			return
+		else:
+			bot.send_message(message.chat.id, BotHelpCommand.get_help_message(False))
+	else:
+		bot.send_message(message.chat.id, BotHelpCommand.get_help_message(False))
 
 @bot.message_handler(commands=['start_game'])
 def handle_start_game(message):
 	database = Database()
-	if not database.does_player_exits(message.chat.id):
+	if database.does_player_exits(message.chat.id):
+		if database.get_user(message.chat.id).gameRound.game_started:
+			bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
+			player = database.get_user(message.chat.id)
+			BotHelpCommand.handle_not_in_first_time(bot, player, message)
+			return
+	else:
 		database.create_user(message.chat.id)
 	player = database.get_user(message.chat.id)
 	player.gameRound.game_started = True
