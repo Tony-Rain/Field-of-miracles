@@ -1,11 +1,10 @@
 import telebot
 
 import BotHelpCommand
+from main_info.secrets import TOKEN, admin_id
 from repository.Repository import Database
-from secrets import TOKEN, user_id
 
 bot = telebot.TeleBot(TOKEN)
-user_id = user_id
 
 
 @bot.message_handler(commands=['start'])
@@ -20,11 +19,11 @@ def handle_start(message):
 
 	bot.send_message(message.chat.id, 'Здравстауйте, Вы запустили игрового бота.\n'
 	                                  'Рекомендуем Вам ознакомиться с инструкцией отправив команду /help.')
-
-	if message.chat.username is None:
-		bot.send_message(user_id, message.chat.first_name + ' ' + message.chat.last_name + ' запустил(а) бота.')
-	else:
-		bot.send_message(user_id, '@' + (message.chat.username) + ' запустил(а) бота.')
+	if admin_id is not None:
+		if message.chat.username is None:
+			bot.send_message(admin_id, message.chat.first_name + ' ' + message.chat.last_name + ' запустил(а) бота.')
+		else:
+			bot.send_message(admin_id, '@' + (message.chat.username) + ' запустил(а) бота.')
 
 
 @bot.message_handler(commands=['help'])
@@ -37,10 +36,8 @@ def handle_help(message):
 			player = database.get_user(message.chat.id)
 			BotHelpCommand.handle_not_in_first_time(bot, player, message)
 			return
-		else:
-			bot.send_message(message.chat.id, BotHelpCommand.get_help_message(False))
-	else:
-		bot.send_message(message.chat.id, BotHelpCommand.get_help_message(False))
+	bot.send_message(message.chat.id, BotHelpCommand.get_help_message(False))
+
 
 @bot.message_handler(commands=['start_game'])
 def handle_start_game(message):
@@ -53,6 +50,13 @@ def handle_start_game(message):
 			return
 	else:
 		database.create_user(message.chat.id)
+		if admin_id is not None:
+			if message.chat.username is None:
+				bot.send_message(admin_id,
+				                 'Зарегистирован новый пользователь под ником' + message.chat.first_name + ' ' + message.chat.last_name)
+			else:
+				bot.send_message(admin_id,
+				                 'Зарегистирован новый пользоветель с usermane ' + '@' + (message.chat.username))
 	player = database.get_user(message.chat.id)
 	player.gameRound.game_started = True
 	BotHelpCommand.handle_first_time(bot, player, message)
@@ -73,12 +77,12 @@ def handle_player_input(message):
 	letter = lowered[0]
 
 	if letter in player.gameRound.input_letters:
-		bot.send_message(message.chat.id, 'Вы уже вводили эту букву. Попробуйте другую.')
+		bot.send_message(message.chat.id, 'Вы уже вводили эту букву, попробуйте другую.')
 	else:
 		if letter in player.gameRound.guessed_word:
 			bot.send_message(message.chat.id, 'Вы угадали, эта буква есть в слове.')
 		else:
-			bot.send_message(message.chat.id, 'Вы не угадали, буквы нет в слове.')
+			bot.send_message(message.chat.id, 'Вы не угадали,этой буквы нет в слове.')
 
 		player.gameRound.input_letters.append(letter)
 		player.gameRound.tries_count -= 1

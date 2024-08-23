@@ -1,5 +1,5 @@
-.idea 
-view/secrets.py
+.idea
 .venv
-view/in.txt
-view/user_id_database.db
+main_info
+view/__pycache__
+repository/__pycache__c

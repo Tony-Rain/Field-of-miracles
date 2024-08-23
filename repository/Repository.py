@@ -1,6 +1,7 @@
 import random
 import sqlite3
 from typing import List
+from main_info.secrets import path_to_words, path_to_db
 
 
 class GameRound:
@@ -29,12 +30,12 @@ class GameRound:
 
 	def get_guessed_letters(self):  # метод, вызывается когда угаданна буква
 		# !!!! не переписать
-		letters = self.guessed_word  # если буква в слове не отгадана, то заменяем ее на *
-		for letter in letters:
+		guessed_letters = self.guessed_word  # если буква в слове не отгадана, то заменяем ее на *
+		for letter in guessed_letters:
 			if letter not in self.input_letters:
-				letters = letters.replace(letter, '*')
+				guessed_letters = guessed_letters.replace(letter, '*')
 
-		return letters
+		return guessed_letters
 
 
 class Player:  # текущая информация об игроке
@@ -43,16 +44,15 @@ class Player:  # текущая информация об игроке
 		self.record = 0
 		self.gameRound = None
 
-
-# def __str__(self):
-# 	return f'player {self.chat_id} with points {self.gameRound.points} and record {self.record}'
+	def __str__(self):
+		return f'player {self.chat_id} with points {self.gameRound.points} and record {self.record}'
 
 
 class Database:  # работа с базой данных
 	players_cache: List[Player] = []
 
 	def __init__(self):
-		with open('in.txt', encoding="utf8") as f:
+		with open(path_to_words, encoding="utf8") as f:
 			self.words_to_guess = f.read().split('\n')
 
 	def does_player_exits(self, user_id: int) -> bool:  # проверка существования игрока
@@ -65,7 +65,7 @@ class Database:  # работа с базой данных
 	def create_user(self, user_id: int):  # добавление нового игрока в базу данных
 		self.execute_and_exit(f'''INSERT INTO Users VALUES({user_id}, '0', '0')''')
 
-	def update_user(self, player: Player):  # изменение показателей игрока
+	def update_user(self, player: Player):  # обновление показателей игрока
 		points = player.gameRound.total_points
 		self.execute_and_exit(f'UPDATE Users SET record = {player.record} WHERE user_id = {player.chat_id}')
 		self.execute_and_exit(f'UPDATE Users SET current_game = {points} WHERE user_id = {player.chat_id}')
@@ -73,8 +73,9 @@ class Database:  # работа с базой данных
 		for x in range(len(self.players_cache)):
 			if self.players_cache[x].chat_id == player.chat_id:
 				del self.players_cache[x]
+				return
 
-	def get_user(self, user_id: int):  # создание нового класса(игрока)
+	def get_user(self, user_id: int):  # выдача игрока, создание нового или взятие из кеша
 		for p in self.players_cache:
 			if p.chat_id == user_id:
 				return p
@@ -93,16 +94,16 @@ class Database:  # работа с базой данных
 		return player
 
 	@staticmethod
-	def execute_and_exit(command: str):  # создаёт соединение к базе данных, выполнение команды и закрывает соединение
-		c = Connection('user_id_database.db')
-		result = c.execute_command(command)
-		c.exit()
+	def execute_and_exit(command: str):  # создаёт соединение к базе данных, выполняет команды и закрывает соединение
+		connection = Connection(path_to_db)
+		result = connection.execute_command(command)
+		connection.exit()
 		return result
 
 
 class Connection:
-	def __init__(self, db_name):  # инициализация полей для работы с базой данных
-		self.connection = sqlite3.connect(db_name)
+	def __init__(self, db_path):  # инициализация полей для работы с базой данных
+		self.connection = sqlite3.connect(db_path)
 		self.cursor = self.connection.cursor()
 
 	def execute_command(self, command: str):  # выполнение команды для базы данных
