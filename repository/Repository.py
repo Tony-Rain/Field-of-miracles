@@ -1,6 +1,7 @@
 import random
 import sqlite3
 from typing import List
+
 from main_info.secrets import path_to_words, path_to_db
 
 
@@ -8,20 +9,20 @@ class GameRound:
 	def __init__(self, word):  # информация о текущем раунде игрока
 		self.game_started = False
 		self.guessed_word = word
-		self.printed_word = word
+		# self.printed_word = word
 		self.input_letters = []
 		self.input_fully_words = []
 		self.was_hint_used = False
 		self.tries_count = len(word) * 2
-		self.is_first_time = True
 		self.total_points = 0
-		self.next_is_right_full_word = False
-		self.guessed_letters = ['*'] * len(word)  # массив звездочек, которые заменяются отгаданными буквами
+		self.right_full_word = False
+
+	# self.guessed_letters = ['*'] * len(word)  # массив звездочек, которые заменяются отгаданными буквами
 
 	def get_points_in_this_game(self):
 		points = self.tries_count
-		# if not self.was_hint_used: временно!!!!!
-		# 	points += 5
+		if not self.was_hint_used:
+			points += 5
 		return points
 
 	def add_scores(self):
@@ -29,13 +30,21 @@ class GameRound:
 		return self.total_points
 
 	def get_guessed_letters(self):  # метод, вызывается когда угаданна буква
-		# !!!! не переписать
 		guessed_letters = self.guessed_word  # если буква в слове не отгадана, то заменяем ее на *
 		for letter in guessed_letters:
 			if letter not in self.input_letters:
 				guessed_letters = guessed_letters.replace(letter, '*')
 
 		return guessed_letters
+
+	def hint_func(self):
+		guessed_letters = self.get_guessed_letters()
+		not_open_letters = []
+		for i in range(len(guessed_letters)):
+			if guessed_letters[i] == '*':
+				not_open_letters.append(self.guessed_word[i])
+		letter = random.choice(not_open_letters)
+		self.input_letters.append(letter)
 
 
 class Player:  # текущая информация об игроке

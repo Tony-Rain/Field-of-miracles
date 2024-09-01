@@ -1,3 +1,6 @@
+from repository.Repository import Database
+
+
 def get_help_message(func_bool):
 	output = ''
 	if not func_bool:
@@ -30,7 +33,6 @@ def get_help_message(func_bool):
 
 
 def handle_first_time(bot, player, message):
-	player.gameRound.is_first_time = False
 	bot.send_message(
 		message.chat.id,
 		'Вы начали новый раунд.\n'
@@ -54,3 +56,32 @@ def handle_not_in_first_time(bot, player, message):
 	output += 'Оставшиеся буквы:  ' + ''.join(str(s) for s in player.gameRound.get_guessed_letters()) + '\n'
 	output += 'Введите букву:'
 	bot.send_message(message.chat.id, output)
+
+
+def win_and_lose_system(bot, player, message):
+	if player.gameRound.tries_count == 0 or '*' not in player.gameRound.get_guessed_letters():
+		if '*' in player.gameRound.get_guessed_letters():  # система проигрыша
+			bot.send_message(message.chat.id,
+			                 'Вы потратили все попытки.\n'
+			                 'Вы не угадали слово.\n'
+			                 f'Задагаданное слово {player.gameRound.guessed_word}.\n'
+			                 'Вы проиграли.')
+			bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.')
+			if player.record < player.gameRound.add_scores():
+				bot.send_message(message.chat.id, 'Поздравляем, Вы побили рекорд')
+				player.record = player.gameRound.add_scores()
+			player.gameRound.total_points = 0
+		else:
+			output = ''
+			if player.gameRound.tries_count == 0:
+				output += 'Вы потратили все попытки.\n'
+			else:
+				len_word = len(player.gameRound.guessed_word)
+				output += f'Вы потратили {len_word * 2 - player.gameRound.tries_count} из {len_word * 2} попыток.\n'
+			output += f'Загаданное слово: {player.gameRound.guessed_word}.\n'
+			output += 'Вы выиграли раунд.\n'
+			bot.send_message(message.chat.id, output)
+			player.gameRound.add_scores()
+			bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.')
+		Database().update_user(player)
+		return True
