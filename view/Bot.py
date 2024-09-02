@@ -83,6 +83,45 @@ def hint_handler(message):
 	                                  'Чтоб начать новый раунд введите команду /start_game.')
 
 
+@bot.message_handler(commands=['fully'])
+def func_fully(message):
+	database = Database()
+	if database.does_player_exits(message.chat.id):
+		player = database.get_user(message.chat.id)
+		if player.gameRound.game_started:
+			msg = bot.send_message(message.chat.id, 'Введите слово целиком:')
+			bot.register_next_step_handler(msg, fully_handler, bot, player)
+			return
+	bot.send_message(message.chat.id, 'Начните новую игру, чтоб отправлять буквы и команды.\n'
+	                                  'Чтоб начать новый раунд введите команду /start_game.')
+
+
+def fully_handler(message, bot, player):
+	if message.text is None:
+		bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
+	else:
+		lowered = message.text.lower()
+		if not BotHelpCommand.check_word(lowered):
+			bot.send_message(message.chat.id, 'В ведённом Вами слове есть сивол(ы),\n'
+			                                  'которые нарушают правила игры.')
+		elif len(lowered) != len(player.gameRound.guessed_word):
+			bot.send_message(message.chat.id, 'Введённое Вами слово не может быть загаданным словом.\n'
+			                                  'У них разное количество букв.')
+		elif lowered in player.gameRound.input_fully_words:
+			bot.send_message(message.chat.id, 'Вы уже вводили это слово,\n'
+			                                  'попробуйте другое.')
+		else:
+			player.gameRound.tries_count -= 1
+			if lowered == player.gameRound.guessed_word:
+				player.gameRound.right_full_word = True
+			else:
+				player.gameRound.input_fully_words.append(lowered)
+				bot.send_message(message.chat.id, 'Вы не угадали слово целиком.')
+			if BotHelpCommand.win_and_lose_system(bot, player, message):
+				return
+	BotHelpCommand.handle_not_in_first_time(bot, player, message)
+
+
 @bot.message_handler(
 	content_types=['text', 'audio', 'document', 'photo', 'sticker', 'video', 'animation', 'video_note', 'voice',
 	               'location', 'contact'])
@@ -92,7 +131,7 @@ def handle_game_not_started(message):
 		player = Database().get_user(message.chat.id)
 		if player.gameRound.game_started:
 			handle_player_input(message)
-		return
+			return
 	bot.send_message(message.chat.id, 'Начните новую игру, чтоб отправлять буквы и команды.\n'
 	                                  'Чтоб начать новый раунд введите команду /start_game.')
 
@@ -118,32 +157,6 @@ def handle_player_input(message):
 				player.gameRound.input_letters.append(letter)
 				player.gameRound.tries_count -= 1
 				if BotHelpCommand.win_and_lose_system(bot, player, message):
-					# if player.gameRound.tries_count == 0 or '*' not in player.gameRound.get_guessed_letters():
-					# 	if '*' in player.gameRound.get_guessed_letters():  # система проигрыша
-					# 		bot.send_message(message.chat.id,
-					# 		                 'Вы потратили все попытки.\n'
-					# 		                 'Вы не угадали слово.\n'
-					# 		                 f'Задагаданное слово {player.gameRound.guessed_word}.\n'
-					# 		                 'Вы проиграли.')
-					# 		bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.')
-					# 		if player.record < player.gameRound.add_scores():
-					# 			bot.send_message(message.chat.id, 'Поздравляем, Вы побили рекорд')
-					# 			player.record = player.gameRound.add_scores()
-					# 		player.gameRound.total_points = 0
-					# 	else:
-					# 		output = ''
-					# 		if player.gameRound.tries_count == 0:
-					# 			output += 'Вы потратили все попытки.\n'
-					# 		else:
-					# 			len_word = len(player.gameRound.guessed_word)
-					# 			output += f'Вы потратили {len_word * 2 - player.gameRound.tries_count} из {len_word * 2} попыток.\n'
-					# 		output += f'Загаданное слово: {player.gameRound.guessed_word}.\n'
-					# 		output += 'Вы выиграли раунд.\n'
-					# 		bot.send_message(message.chat.id, output)
-					# 		player.gameRound.add_scores()
-					# 		bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.')
-					# 	Database().update_user(player)
-					# 	return
 					return
 	BotHelpCommand.handle_not_in_first_time(bot, player, message)
 

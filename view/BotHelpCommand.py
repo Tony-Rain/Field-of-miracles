@@ -33,13 +33,11 @@ def get_help_message(func_bool):
 
 
 def handle_first_time(bot, player, message):
-	bot.send_message(
-		message.chat.id,
-		'Вы начали новый раунд.\n'
-		f'Сейчас Ваш очки равны  {player.gameRound.total_points}.\n'
-		f'У Вас есть {player.gameRound.tries_count} попыток.\n'
-		f'Оставшиеся буквы: {player.gameRound.get_guessed_letters()}\n'
-		f'Введите букву:')
+	bot.send_message(message.chat.id, 'Вы начали новый раунд.\n'
+	                                  f'Сейчас Ваш очки равны  {player.gameRound.total_points}.\n'
+	                                  f'У Вас есть {player.gameRound.tries_count} попыток.\n'
+	                                  f'Оставшиеся буквы: {player.gameRound.get_guessed_letters()}\n'
+	                                  f'Введите букву:')
 
 
 def handle_not_in_first_time(bot, player, message):
@@ -51,7 +49,7 @@ def handle_not_in_first_time(bot, player, message):
 		output += f'Введённые буквы:  ' + ', '.join(str(s) for s in player.gameRound.input_letters) + '.\n'
 	if len(player.gameRound.input_fully_words) != 0:
 		player.gameRound.input_fully_words.sort()
-		output += f'Введённые слова: {",".join(str(s) for s in player.gameRound.input_fully_words())} .\n'
+		output += f'Введённые слова:  ' + ', '.join(str(s) for s in player.gameRound.input_fully_words) + '.\n'
 
 	output += 'Оставшиеся буквы:  ' + ''.join(str(s) for s in player.gameRound.get_guessed_letters()) + '\n'
 	output += 'Введите букву:'
@@ -59,13 +57,12 @@ def handle_not_in_first_time(bot, player, message):
 
 
 def win_and_lose_system(bot, player, message):
-	if player.gameRound.tries_count == 0 or '*' not in player.gameRound.get_guessed_letters():
-		if '*' in player.gameRound.get_guessed_letters():  # система проигрыша
-			bot.send_message(message.chat.id,
-			                 'Вы потратили все попытки.\n'
-			                 'Вы не угадали слово.\n'
-			                 f'Задагаданное слово {player.gameRound.guessed_word}.\n'
-			                 'Вы проиграли.')
+	if player.gameRound.tries_count == 0 or '*' not in player.gameRound.get_guessed_letters() or player.gameRound.right_full_word:
+		if '*' in player.gameRound.get_guessed_letters() and not player.gameRound.right_full_word:  # система проигрыша
+			bot.send_message(message.chat.id, 'Вы потратили все попытки.\n'
+			                                  'Вы не угадали слово.\n'
+			                                  f'Задагаданное слово {player.gameRound.guessed_word}.\n'
+			                                  'Вы проиграли.')
 			bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.')
 			if player.record < player.gameRound.add_scores():
 				bot.send_message(message.chat.id, 'Поздравляем, Вы побили рекорд')
@@ -85,3 +82,11 @@ def win_and_lose_system(bot, player, message):
 			bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.')
 		Database().update_user(player)
 		return True
+
+
+def check_word(func_word):
+	for elem in func_word:
+		if (ord(elem) < 1040 or ord(elem) > 1103) and elem != 'ё':
+			return False
+		else:
+			return True

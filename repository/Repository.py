@@ -9,15 +9,12 @@ class GameRound:
 	def __init__(self, word):  # информация о текущем раунде игрока
 		self.game_started = False
 		self.guessed_word = word
-		# self.printed_word = word
 		self.input_letters = []
 		self.input_fully_words = []
 		self.was_hint_used = False
 		self.tries_count = len(word) * 2
 		self.total_points = 0
 		self.right_full_word = False
-
-	# self.guessed_letters = ['*'] * len(word)  # массив звездочек, которые заменяются отгаданными буквами
 
 	def get_points_in_this_game(self):
 		points = self.tries_count
