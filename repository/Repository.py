@@ -106,6 +106,13 @@ class Database:  # работа с базой данных
 		connection.exit()
 		return result
 
+	def show_progress(self, user_id: int):
+		points, record = self.execute_and_exit(f'SELECT current_game, record FROM Users WHERE user_id = {user_id}')[0]
+		return points, record
+
+	def reset_record(self, user_id: int):
+		self.execute_and_exit(f'UPDATE Users SET record = {0} WHERE user_id = {user_id}')
+
 
 class Connection:
 	def __init__(self, db_path):  # инициализация полей для работы с базой данных
