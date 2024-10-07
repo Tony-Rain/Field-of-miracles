@@ -68,7 +68,10 @@ def handle_player_input(message):
 	if message.text is None:
 		bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
 	else:
-		lowered = message.text.lower()
+		if message.chat.type == 'group':
+			lowered = BotHelpCommand.change_group_message(message.text)
+		else:
+			lowered = message.text.lower()
 		if len(lowered) != 1 or (lowered < 'а' or lowered > 'я') and lowered != 'ё':
 			bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
 		else:
@@ -101,6 +104,10 @@ def win_and_lose_system(bot, player, message):
 			player.gameRound.total_points = 0
 		else:
 			output = ''
+			if player.gameRound.right_full_word:
+				output += 'Вы угадали слово.\n'
+			else:
+				output += 'Вы угадали слово целиком.\n'
 			if player.gameRound.tries_count == 0:
 				output += 'Вы потратили все попытки.\n'
 			else:
@@ -110,7 +117,8 @@ def win_and_lose_system(bot, player, message):
 			output += 'Вы выиграли раунд.\n'
 			bot.send_message(message.chat.id, output)
 			player.gameRound.add_scores()
-			bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.')
+			bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.\n'
+			                                  'Чтоб начать новый раунд отправте команду /start_game.')
 		Database().update_user(player)
 		return True
 
@@ -153,7 +161,10 @@ def fully_handler(message, bot, player):
 	if message.text is None:
 		bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
 	else:
-		lowered = message.text.lower()
+		if message.chat.type == 'group':
+			lowered = BotHelpCommand.change_group_message(message.text)
+		else:
+			lowered = message.text.lower()
 		if not BotHelpCommand.check_word(lowered):
 			bot.send_message(message.chat.id, 'В ведённом Вами слове есть сивол(ы),\n'
 			                                  'которые нарушают правила игры.')
@@ -202,7 +213,6 @@ def reset_record(message):
 			return
 		database.reset_record(message.chat.id)
 	bot.send_message(message.chat.id, 'Ваш рекорд сброшен.')
-
 
 
 @bot.message_handler(

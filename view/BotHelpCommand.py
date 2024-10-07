@@ -23,9 +23,11 @@ def get_help_message(func_bool):
 	           '2.1.Исключение команды: /hint, /fully, /help, /show_progress.\n'
 	           '3.Вводить цифры нельзя.\n'
 	           'Комадны /hint, /fully не работают, пока не запущена игра.\n'
-	           'Команда /start, /reset_record не работает во время запущенной игры.\n')
+	           'Команды /start, /reset_record не работают во время запущенной игры.\n'
+	           'Если Вы хотите использовать бота в группах,\n'
+	           'то бот будет регеагировать только на сообщения с "/" в начале сообщения\n')
 	if not func_bool:
-		output += 'Начните новую игру прямо сейчас введя команду /start_game!'
+		output += 'Начните новую игру прямо сейчас, введя команду /start_game!'
 	return output
 
 
@@ -59,3 +61,7 @@ def check_word(func_word):
 			return False
 		else:
 			return True
+
+
+def change_group_message(message_text: str):
+	return message_text[1:].lower()
