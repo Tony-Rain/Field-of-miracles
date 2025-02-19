@@ -26,7 +26,7 @@ class GameRound:
 		self.total_points += self.get_points_in_this_game()
 		return self.total_points
 
-	def get_guessed_letters(self):  # метод, вызывается когда угаданна буква
+	def get_guessed_letters(self):  # метод, вызывается когда угадана буква
 		guessed_letters = self.guessed_word  # если буква в слове не отгадана, то заменяем ее на *
 		for letter in guessed_letters:
 			if letter not in self.input_letters:
@@ -51,7 +51,7 @@ class Player:  # текущая информация об игроке
 		self.gameRound = None
 
 	def __str__(self):
-		return f'player {self.chat_id} with points {self.gameRound.points} and record {self.record}'
+		return f'player {self.chat_id} with points {self.gameRound.total_points} and record {self.record}'
 
 
 class Database:  # работа с базой данных
@@ -87,7 +87,6 @@ class Database:  # работа с базой данных
 				return p
 
 		points, record = self.execute_and_exit(f'SELECT current_game, record FROM Users WHERE user_id = {user_id}')[0]
-
 		player = Player(user_id)
 		player.record = record
 		player.gameRound = GameRound(random.choice(self.words_to_guess))
@@ -111,6 +110,9 @@ class Database:  # работа с базой данных
 		return points, record
 
 	def reset_record(self, user_id: int):
+		if self.does_player_exits(user_id):
+			player = self.get_user(user_id)
+			player.record = 0
 		self.execute_and_exit(f'UPDATE Users SET record = {0} WHERE user_id = {user_id}')
 
 

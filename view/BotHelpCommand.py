@@ -1,6 +1,16 @@
-def get_help_message(func_bool):
+def registration(bot ,message, admin_id):
+	if admin_id is not None:
+		if message.chat.username is None:
+			bot.send_message(admin_id,
+							 'Зарегистирован новый пользователь под ником' + message.chat.first_name + ' ' + message.chat.last_name)
+		else:
+			bot.send_message(admin_id,
+							 'Зарегистирован новый пользоветель с usermane ' + '@' + (message.chat.username))
+
+
+def get_help_message(is_game_started: bool):
 	output = ''
-	if not func_bool:
+	if not is_game_started:
 		output += 'По команде /start_game запустится новый раунд.\n'
 	output += ('Ваша задача угадать слово по буквам, за это можно получать очки.\n'
 	           'Чем меньше Вы потратили попыток на угадывание слова, тем больше очков вы получите.\n'
@@ -26,7 +36,7 @@ def get_help_message(func_bool):
 	           'Команды /start, /reset_record не работают во время запущенной игры.\n'
 	           'Если Вы хотите использовать бота в группах,\n'
 	           'то бот будет регеагировать только на сообщения с "/" в начале сообщения\n')
-	if not func_bool:
+	if not is_game_started:
 		output += 'Начните новую игру прямо сейчас, введя команду /start_game!'
 	return output
 
