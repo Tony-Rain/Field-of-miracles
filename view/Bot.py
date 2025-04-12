@@ -17,7 +17,7 @@ def handle_start(message):
 			view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
 			return
 
-	bot.send_message(message.chat.id, 'Здравстауйте, Вы запустили игрового бота.\n'
+	bot.send_message(message.chat.id, 'Здравствуйте, Вы запустили игрового бота.\n'
 	                                  'Рекомендуем Вам ознакомиться с инструкцией отправив команду /help.')
 	if admin_id is not None:
 		if message.chat.username is None:
@@ -89,7 +89,7 @@ def win_and_lose_system(bot, player, message):
 		if '*' in player.gameRound.get_guessed_letters() and not player.gameRound.right_full_word:  # система проигрыша
 			bot.send_message(message.chat.id, 'Вы потратили все попытки.\n'
 			                                  'Вы не угадали слово.\n'
-			                                  f'Задагаданное слово {player.gameRound.guessed_word}.\n'
+			                                  f'Загаданное слово {player.gameRound.guessed_word}.\n'
 			                                  'Вы проиграли.')
 			bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.')
 			if player.record < player.gameRound.total_points:
@@ -112,7 +112,7 @@ def win_and_lose_system(bot, player, message):
 			bot.send_message(message.chat.id, output)
 			player.gameRound.add_scores()
 			bot.send_message(message.chat.id, f'Ваш результат: {player.gameRound.total_points}.\n'
-			                                  'Чтоб начать новый раунд отправте команду /start_game.')
+			                                  'Чтоб начать новый раунд отправьте команду /start_game.')
 		Database().update_user(player)
 		return True
 
@@ -160,7 +160,7 @@ def fully_handler(message, bot, player):
 		else:
 			lowered = message.text.lower()
 		if not view.BotHelpCommand.check_word(lowered):
-			bot.send_message(message.chat.id, 'В ведённом Вами слове есть сивол(ы),\n'
+			bot.send_message(message.chat.id, 'В ведённом Вами слове есть символ(ы),\n'
 			                                  'которые нарушают правила игры.')
 		elif len(lowered) != len(player.gameRound.guessed_word):
 			bot.send_message(message.chat.id, 'Введённое Вами слово не может быть загаданным словом.\n'

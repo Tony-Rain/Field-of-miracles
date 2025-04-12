@@ -23,7 +23,7 @@ connection.commit()
 connection.close()
 
 token = input('Введите токен бота: ')
-print('Введите admin id, на него будут приходить имена польхователей бота.')
+print('Введите id аккаунта в телеграмме, на него будут приходить имена пользователей бота.')
 admin_id = input('Если эта функция Вам не нужна просто нажмите Enter: ')
 if admin_id == '':
 	admin_id = None
