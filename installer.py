@@ -22,9 +22,9 @@ record INTEGER
 connection.commit()
 connection.close()
 
-token = input('Введите токен бота: ')
-print('Введите id аккаунта в телеграмме, на него будут приходить имена пользователей бота.')
-admin_id = input('Если эта функция Вам не нужна просто нажмите Enter: ')
+token = input("Enter bot'S API token: ")
+print('Enter the telegram account id who will have administrator rights')
+admin_id = input("If you don't need this function, just press Enter: ")
 if admin_id == '':
 	admin_id = None
 secrets_py_path = os.path.join(dir_path, 'secrets.py')
@@ -32,3 +32,4 @@ secrets_py = open(fr'{secrets_py_path}', 'w', encoding='utf8')  # создани
 secrets_py.write(
 	f"TOKEN = '{token}'\nadmin_id = {admin_id}\n"
 	f"path_to_words = r'{in_txt_path}'\npath_to_db = r'{user_id_database_db_path}'\n")
+print('Success!')
