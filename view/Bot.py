@@ -10,64 +10,49 @@ bot = telebot.TeleBot(TOKEN)
 @bot.message_handler(commands=['start'])
 def handle_start(message):
     database = Database()
-    if database.does_player_exits(message.chat.id):
-        if database.get_user(message.chat.id).gameRound.game_started:
-            bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
-            player = database.get_user(message.chat.id)
-            view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
-            return
-
-    bot.send_message(message.chat.id, 'Здравствуйте, Вы запустили игрового бота.\n'
-                                      'Рекомендуем Вам ознакомиться с инструкцией отправив команду /help.')
-    if admin_id is not None:
-        if message.chat.username is None:
-            bot.send_message(admin_id, message.chat.first_name + ' ' + message.chat.last_name + ' запустил(а) бота.')
-        else:
-            bot.send_message(admin_id, '@' + message.chat.username + ' запустил(а) бота.')
+    player = database.getting_user_data(message.chat.id)
+    if player:
+        view.BotHelpCommand.get_bad_input_message(bot, message)
+        view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
+        return
+    view.BotHelpCommand.launch(bot, message, admin_id)
+    view.BotHelpCommand.get_welcome_message(bot, message)
 
 
 @bot.message_handler(commands=['help'])
 def handle_help(message):
-    # bot.send_message(message.chat.id, BotHelpCommand.get_help_message())
     database = Database()
-    if database.does_player_exits(message.chat.id):
-        if database.get_user(message.chat.id).gameRound.game_started:
-            bot.send_message(message.chat.id, view.BotHelpCommand.get_help_message(True))
-            player = database.get_user(message.chat.id)
-            view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
-            return
-    bot.send_message(message.chat.id, view.BotHelpCommand.get_help_message(False))
+    player = database.getting_user_data(message.chat.id)
+    if player:
+        bot.send_message(message.chat.id, view.BotHelpCommand.getting_small_help_message())
+        view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
+        return
+    bot.send_message(message.chat.id, view.BotHelpCommand.getting_large_help_message())
 
 
 @bot.message_handler(commands=['start_game'])
 def handle_start_game(message):
     database = Database()
-    if database.does_player_exits(message.chat.id):
-        player = database.get_user(message.chat.id)
-        if player.gameRound.game_started:
-            bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
-            view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
-            return
+    player = database.getting_user_data(message.chat.id)
+    if player:
+        view.BotHelpCommand.get_bad_input_message(bot, message)
+        view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
+        return
     else:
-        database.create_user(message.chat.id)
-        view.BotHelpCommand.registration(bot, message, admin_id)
-    player = database.get_user(message.chat.id)
-    player.gameRound.game_started = True
+        if not database.does_player_exits(message.chat.id):
+            database.adding_new_user(message.chat.id)
+            view.BotHelpCommand.registration(bot, message, admin_id)
+    player = database.create_user(message.chat.id)
     view.BotHelpCommand.handle_first_time(bot, player, message)
 
 
-def handle_player_input(message):
-    player = Database().get_user(message.chat.id)
-
+def handle_player_input(message, player):
     if message.text is None:
-        bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
+        view.BotHelpCommand.get_bad_input_message(bot, message)
     else:
-        if message.chat.type == 'group':
-            lowered = view.BotHelpCommand.change_group_message(message.text)
-        else:
-            lowered = message.text.lower()
+        lowered = view.BotHelpCommand.edit_message(message)
         if len(lowered) != 1 or (lowered < 'а' or lowered > 'я') and lowered != 'ё':
-            bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
+            view.BotHelpCommand.get_bad_input_message(bot, message)
         else:
             letter = lowered[0]
             if letter in player.gameRound.input_letters:
@@ -120,20 +105,19 @@ def win_and_lose_system(bot, player, message):
 @bot.message_handler(commands=['hint'])
 def hint_handler(message):
     database = Database()
-    if database.does_player_exits(message.chat.id):
-        player = database.get_user(message.chat.id)
-        if player.gameRound.game_started:
-            if not player.gameRound.was_hint_used:
-                player.gameRound.hint_func()
-                player.gameRound.tries_count -= 1
-                player.gameRound.was_hint_used = True
-                if win_and_lose_system(bot, player, message):
-                    return
-            else:
-                bot.send_message(message.chat.id, 'Вы уже использовали подсказку,\n'
-                                                  'её можно использовать только один раз.')
-            view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
-            return
+    player = database.getting_user_data(message.chat.id)
+    if player:
+        if not player.gameRound.was_hint_used:
+            player.gameRound.hint_func()
+            player.gameRound.tries_count -= 1
+            player.gameRound.was_hint_used = True
+            if win_and_lose_system(bot, player, message):
+                return
+        else:
+            bot.send_message(message.chat.id, 'Вы уже использовали подсказку,\n'
+                                              'её можно использовать только один раз.')
+        view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
+        return
     bot.send_message(message.chat.id, 'Начните новую игру, чтоб отправлять буквы и команды.\n'
                                       'Чтоб начать новый раунд введите команду /start_game.')
 
@@ -141,24 +125,20 @@ def hint_handler(message):
 @bot.message_handler(commands=['fully'])
 def func_fully(message):
     database = Database()
-    if database.does_player_exits(message.chat.id):
-        player = database.get_user(message.chat.id)
-        if player.gameRound.game_started:
-            msg = bot.send_message(message.chat.id, 'Введите слово целиком:')
-            bot.register_next_step_handler(msg, fully_handler, bot, player)
-            return
+    player = database.getting_user_data(message.chat.id)
+    if player:
+        msg = bot.send_message(message.chat.id, 'Введите слово целиком:')
+        bot.register_next_step_handler(msg, fully_handler, bot, player)
+        return
     bot.send_message(message.chat.id, 'Начните новую игру, чтоб отправлять буквы и команды.\n'
                                       'Чтоб начать новый раунд введите команду /start_game.')
 
 
 def fully_handler(message, bot, player):
     if message.text is None:
-        bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
+        view.BotHelpCommand.get_bad_input_message(bot, message)
     else:
-        if message.chat.type == 'group':
-            lowered = view.BotHelpCommand.change_group_message(message.text)
-        else:
-            lowered = message.text.lower()
+        lowered = view.BotHelpCommand.edit_message(message)
         if not view.BotHelpCommand.check_word(lowered):
             bot.send_message(message.chat.id, 'В ведённом Вами слове есть символ(ы),\n'
                                               'которые нарушают правила игры.')
@@ -183,14 +163,13 @@ def fully_handler(message, bot, player):
 @bot.message_handler(commands=['show_progress'])
 def show_progress(message):
     database = Database()
+    player = database.getting_user_data(message.chat.id)
+    if player:
+        view.BotHelpCommand.get_bad_input_message(bot, message)
+        view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
+        return
     if database.does_player_exits(message.chat.id):
-        player = Database().get_user(message.chat.id)
-        if player.gameRound.game_started:
-            bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
-            view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
-            return
-        else:
-            points, record = database.show_progress(message.chat.id)
+        points, record = database.show_progress(message.chat.id)
     else:
         points, record = 0, 0
     bot.send_message(message.chat.id, f'Ваши очки: {points}.\n'
@@ -201,12 +180,12 @@ def show_progress(message):
 @bot.message_handler(commands=['reset_record'])
 def reset_record(message):
     database = Database()
+    player = database.getting_user_data(message.chat.id)
+    if player:
+        view.BotHelpCommand.get_bad_input_message(bot, message)
+        view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
+        return
     if database.does_player_exits(message.chat.id):
-        player = Database().get_user(message.chat.id)
-        if player.gameRound.game_started:
-            bot.send_message(message.chat.id, 'Ваш ввод нарушает правила!')
-            view.BotHelpCommand.handle_not_in_first_time(bot, player, message)
-            return
         database.reset_record(message.chat.id)
     bot.send_message(message.chat.id, 'Ваш рекорд сброшен.')
 
@@ -216,11 +195,10 @@ def reset_record(message):
                    'location', 'contact'])
 def handle_game_not_started(message):
     database = Database()
-    if database.does_player_exits(message.chat.id):
-        player = Database().get_user(message.chat.id)
-        if player.gameRound.game_started:
-            handle_player_input(message)
-            return
+    player = database.getting_user_data(message.chat.id)
+    if player:
+        handle_player_input(message, player)
+        return
     bot.send_message(message.chat.id, 'Начните новую игру, чтоб отправлять буквы и команды.\n'
                                       'Чтоб начать новый раунд введите команду /start_game.')
 
