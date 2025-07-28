@@ -63,7 +63,7 @@ class Database:  # работа с базой данных
             if len(self.players_id) == 0:
                 self.players_id = self.execute_and_exit(f"Select user_id from Users")
 
-    def adding_new_user(self, user_id: int):
+    def registration_new_user(self, user_id: int):
         self.execute_and_exit(f'''INSERT INTO Users VALUES({user_id}, '0', '0')''')
         self.players_id.append(user_id)
 
@@ -89,7 +89,7 @@ class Database:  # работа с базой данных
                 return elem
         return False
 
-    def create_user(self, user_id: int):
+    def adding_new_user_in_cache(self, user_id: int):
         points, record = self.execute_and_exit(f'SELECT current_game, record FROM Users WHERE user_id = {user_id}')[0]
         player = Player(user_id)
         player.record = record

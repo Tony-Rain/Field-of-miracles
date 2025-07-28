@@ -40,9 +40,9 @@ def handle_start_game(message):
         return
     else:
         if not database.does_player_exits(message.chat.id):
-            database.adding_new_user(message.chat.id)
+            database.registration_new_user(message.chat.id)
             view.BotHelpCommand.registration(bot, message, admin_id)
-    player = database.create_user(message.chat.id)
+    player = database.adding_new_user_in_cache(message.chat.id)
     view.BotHelpCommand.handle_first_time(bot, player, message)
 
 
